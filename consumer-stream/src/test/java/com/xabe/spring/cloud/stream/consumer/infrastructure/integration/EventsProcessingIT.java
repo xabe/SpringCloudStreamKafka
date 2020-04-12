@@ -41,7 +41,7 @@ public class EventsProcessingIT extends BaseIT {
   @Test
   public void shouldConsumerCarCreated() throws Exception {
     //Given
-    final Car car = Car.newBuilder().setId("id").setName("mazda").build();
+    final Car car = Car.newBuilder().setId("id1").setName("mazda").build();
     final CarCreated carCreated = CarCreated.newBuilder().setSentAt(Instant.now().toEpochMilli()).setCar(car).build();
     final MessageEnvelope messageEnvelope = MessageEnvelope.newBuilder().setMetadata(this.createMetaData()).setPayload(carCreated).build();
 
@@ -57,13 +57,13 @@ public class EventsProcessingIT extends BaseIT {
   @Test
   public void shouldConsumerCarUpdate() throws Exception {
     //Given
-    final Car carOld = Car.newBuilder().setId("id").setName("mazda").build();
+    final Car carOld = Car.newBuilder().setId("id2").setName("mazda").build();
     this.integrationStreams.carOutputChannel().send(MessageBuilder.withPayload(
         MessageEnvelope.newBuilder().setMetadata(this.createMetaData())
             .setPayload(CarCreated.newBuilder().setSentAt(Instant.now().toEpochMilli()).setCar(carOld).build()).build())
         .setHeader(PARTITION_KEY, carOld.getId()).build());
 
-    final Car car = Car.newBuilder().setId("id").setName("mazda3").build();
+    final Car car = Car.newBuilder().setId("id2").setName("mazda3").build();
     final CarUpdated carUpdated = CarUpdated.newBuilder().setSentAt(Instant.now().toEpochMilli()).setCarBeforeUpdate(carOld).setCar(car)
         .build();
     final MessageEnvelope messageEnvelope = MessageEnvelope.newBuilder().setMetadata(this.createMetaData()).setPayload(carUpdated).build();
@@ -80,7 +80,7 @@ public class EventsProcessingIT extends BaseIT {
   @Test
   public void shouldConsumerCarDelete() throws Exception {
     //Given
-    final Car car = Car.newBuilder().setId("delete").setName("mazda").build();
+    final Car car = Car.newBuilder().setId("delete").setName("delete").build();
     this.integrationStreams.carOutputChannel().send(MessageBuilder.withPayload(
         MessageEnvelope.newBuilder().setMetadata(this.createMetaData())
             .setPayload(CarCreated.newBuilder().setSentAt(Instant.now().toEpochMilli()).setCar(car).build()).build())

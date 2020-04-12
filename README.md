@@ -3,7 +3,7 @@
 En este ejemplo vemos como usar spring cloud stream con kafka y avro, lo primero es arranca los containers de:
 
 - kafka
-- zookeper
+- zookeeper
 - schema registry
 
 Solo tenemos que lanzar el siguiente comando para arrancar todos los contenedores:
