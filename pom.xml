@@ -29,7 +29,7 @@
     <avro.confluent.version>5.3.1</avro.confluent.version>
     <schema-registry.plugin.version>5.0.1</schema-registry.plugin.version>
     <!-- FIXME When we will update avro to 1.9.1 and confluent to 5.4, we removed common-compress.version -->
-    <commons-compress.version>1.18</commons-compress.version>
+    <commons-compress.version>1.19</commons-compress.version>
     <skipTests>false</skipTests>
     <skipITs>${skipTests}</skipITs>
     <skipUTs>${skipTests}</skipUTs>
