@@ -1,0 +1,24 @@
+logging:
+  level:
+    root: INFO
+    com.xabe.spring.cloud.stream: DEBUG
+    org.springframework.cloud.stream: DEBUG
+
+spring:
+  cloud:
+    stream:
+      kafka:
+        bindings:
+          consumer-car-in:
+            consumer:
+              destinationIsPattern: true
+      bindings:
+        consumer-car-in:
+          binder: kafka-pipe
+          consumer:
+            startOffset: ${consumer.startOffset:latest}
+            concurrency: ${consumer.concurrency:3}
+            max-attemps: ${consumer.maxattemps:3}
+          group: ${consumer.group:car}
+          destination: ${consumer.car.topic:car.v1.*}
+          contentType: application/*+avro

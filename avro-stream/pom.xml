@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <artifactId>spring-cloud-stream</artifactId>
+    <groupId>com.xabe</groupId>
+    <version>0.0.1-SNAPSHOT</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+  <packaging>jar</packaging>
+
+  <artifactId>avro-stream</artifactId>
+
+  <properties>
+    <avro.stringType>String</avro.stringType>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.avro</groupId>
+        <artifactId>avro-maven-plugin</artifactId>
+        <version>${avro.version}</version>
+        <executions>
+          <execution>
+            <id>avro-events</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>schema</goal>
+            </goals>
+            <configuration>
+              <sourceDirectory>${project.basedir}/src/main/resources/event</sourceDirectory>
+              <outputDirectory>${project.build.directory}/generated-sources/evevnt</outputDirectory>
+              <includes>
+                <include>**/*.avsc</include>
+              </includes>
+              <imports>
+                <import>${project.basedir}/src/main/resources/event/imports</import>
+              </imports>
+              <stringType>${avro.stringType}</stringType>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>io.confluent</groupId>
+        <artifactId>kafka-schema-registry-maven-plugin</artifactId>
+        <version>${schema-registry.plugin.version}</version>
+        <goals>
+          <goal>register</goal>
+        </goals>
+        <configuration>
+          <schemaRegistryUrls>
+            <!--suppress UnresolvedMavenProperty -->
+            <param>${schema-registry.url}</param>
+          </schemaRegistryUrls>
+          <subjects>
+            <extracted-activity-value>src/main/avro/avsc/Event.avsc</extracted-activity-value>
+          </subjects>
+          <outputDirectory/>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+
+</project>

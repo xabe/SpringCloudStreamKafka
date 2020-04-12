@@ -1,0 +1,19 @@
+logging:
+  level:
+    root: INFO
+    com.xabe.spring.cloud.stream: DEBUG
+    org.springframework.cloud.stream: DEBUG
+
+spring:
+  cloud:
+    stream:
+      kafka:
+        bindings:
+          producer-car-out:
+            producer:
+              messageKeyExpression: headers['partitionKey']
+      bindings:
+        producer-car-out:
+          binder: kafka-pipe
+          destination: car.v1
+          content-type: application/*+avro

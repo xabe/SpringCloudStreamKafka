@@ -1,0 +1,59 @@
+server:
+  servlet:
+    context-path: /
+  port: 8080
+logging:
+  level:
+    root: INFO
+    com.xabe.spring.cloud.stream: INFO
+    org.springframework.cloud.stream: INFO
+
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  application:
+    name: consumer
+  cloud:
+    stream:
+      kafka:
+        bindings:
+          consumer-car-in:
+            consumer:
+              destinationIsPattern: true
+      default:
+        producer:
+          useNativeEncoding: true
+        consumer:
+          useNativeEncoding: true
+      binders:
+        kafka-pipe:
+          type: kafka
+          environment:
+            spring.cloud.stream.kafka.binder:
+              producer-properties:
+                key.serializer: org.apache.kafka.common.serialization.StringSerializer
+                value.serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+                schema.registry.url: http://localhost:8081
+                specific.avro.reader: true
+              consumer-properties:
+                key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+                value.deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+                schema.registry.url: http://localhost:8081
+                specific.avro.reader: true
+              autoAddPartitions: true
+              autoCreateTopics: true
+              minPartitionCount: 3
+              defaultBrokerPort: 9092
+              requiredAcks: all
+              brokers:
+                - localhost
+      bindings:
+        consumer-car-in:
+          binder: kafka-pipe
+          consumer:
+            startOffset: ${consumer.startOffset:latest}
+            concurrency: ${consumer.concurrency:3}
+            max-attemps: ${consumer.maxattemps:3}
+          group: ${consumer.group:car}
+          destination: ${consumer.car.topic:car.v1.*}
+          contentType: application/*+avro

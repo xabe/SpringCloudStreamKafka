@@ -1,0 +1,54 @@
+server:
+  servlet:
+    context-path: /
+  port: 9080
+logging:
+  level:
+    root: INFO
+    com.xabe.spring.cloud.stream: INFO
+    org.springframework.cloud.stream: INFO
+
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  application:
+    name: producer
+  cloud:
+    stream:
+      default:
+        producer:
+          useNativeEncoding: true
+        consumer:
+          useNativeEncoding: true
+      kafka:
+        bindings:
+          producer-car-out:
+            producer:
+              messageKeyExpression: headers['partitionKey']
+      binders:
+        kafka-pipe:
+          type: kafka
+          environment:
+            spring.cloud.stream.kafka.binder:
+              producer-properties:
+                key.serializer: org.apache.kafka.common.serialization.StringSerializer
+                value.serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+                schema.registry.url: http://localhost:8081
+                specific.avro.reader: true
+              consumer-properties:
+                key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+                value.deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+                schema.registry.url: http://localhost:8081
+                specific.avro.reader: true
+              autoAddPartitions: true
+              autoCreateTopics: true
+              minPartitionCount: 3
+              defaultBrokerPort: 9092
+              requiredAcks: all
+              brokers:
+                - localhost
+      bindings:
+        producer-car-out:
+          binder: kafka-pipe
+          destination: car.v1
+          content-type: application/*+avro
