@@ -1,4 +1,4 @@
-package com.xabe.spring.cloud.stream.consumer.infrastructure.integration;
+package com.xabe.spring.cloud.stream.producer.infrastructure.integration.config;
 
 import static java.lang.String.format;
 

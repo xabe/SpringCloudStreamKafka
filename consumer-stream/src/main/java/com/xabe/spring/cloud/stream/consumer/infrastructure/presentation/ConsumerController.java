@@ -2,7 +2,7 @@ package com.xabe.spring.cloud.stream.consumer.infrastructure.presentation;
 
 import com.xabe.spring.cloud.stream.consumer.domain.entity.CarDO;
 import com.xabe.spring.cloud.stream.consumer.infrastructure.application.ConsumerUseCase;
-import com.xabe.spring.cloud.stream.consumer.infrastructure.presentation.payload.CarDTO;
+import com.xabe.spring.cloud.stream.consumer.infrastructure.presentation.payload.CarPayload;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -26,7 +26,7 @@ public class ConsumerController {
     return ResponseEntity.ok(this.consumerUseCase.getCars().stream().map(this::mapper).collect(Collectors.toList()));
   }
 
-  private CarDTO mapper(final CarDO carDO) {
-    return CarDTO.builder().sentAt(carDO.getSentAt()).id(carDO.getId()).name(carDO.getName()).build();
+  private CarPayload mapper(final CarDO carDO) {
+    return CarPayload.builder().sentAt(carDO.getSentAt()).id(carDO.getId()).name(carDO.getName()).build();
   }
 }

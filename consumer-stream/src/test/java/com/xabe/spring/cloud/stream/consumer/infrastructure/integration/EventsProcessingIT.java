@@ -1,37 +1,75 @@
 package com.xabe.spring.cloud.stream.consumer.infrastructure.integration;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+
 import com.xabe.avro.v1.Car;
 import com.xabe.avro.v1.CarCreated;
 import com.xabe.avro.v1.CarDeleted;
 import com.xabe.avro.v1.CarUpdated;
 import com.xabe.avro.v1.MessageEnvelope;
 import com.xabe.avro.v1.Metadata;
+import com.xabe.spring.cloud.stream.consumer.App;
 import com.xabe.spring.cloud.stream.consumer.domain.repository.ConsumerRepository;
+import com.xabe.spring.cloud.stream.consumer.infrastructure.integration.config.IntegrationStreams;
+import com.xabe.spring.cloud.stream.consumer.infrastructure.integration.config.UrlUtil;
+import com.xabe.spring.cloud.stream.consumer.infrastructure.presentation.payload.CarPayload;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.TimeUnit;
+import kong.unirest.HttpResponse;
+import kong.unirest.Unirest;
+import org.apache.commons.io.IOUtils;
 import org.awaitility.Awaitility;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-public class EventsProcessingIT extends BaseIT {
+@SpringBootTest(classes = App.class, webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
+@ExtendWith(SpringExtension.class)
+@ActiveProfiles("test")
+public class EventsProcessingIT {
 
   private static final String PARTITION_KEY = "partitionKey";
 
-  private static final int TIMEOUT = 2;
+  public static final int TIMEOUT_MS = 3000;
 
-  private static final int DELAY = 500;
+  public static final int DELAY_MS = 500;
 
-  private static final int POLL_INTERVAL = 500;
+  public static final int POLL_INTERVAL_MS = 500;
 
   @Autowired
   private IntegrationStreams integrationStreams;
 
   @Autowired
   private ConsumerRepository consumerRepository;
+
+  @LocalServerPort
+  private int serverPort;
+
+  @BeforeAll
+  public static void createMapping() throws IOException {
+    final InputStream car = EventsProcessingIT.class.getClassLoader().getResourceAsStream("avro-car.json");
+    Unirest.post(UrlUtil.getInstance().getSchemaRegistryCar()).header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+        .body(IOUtils.toString(car, StandardCharsets.UTF_8)).asJson();
+
+  }
 
   @BeforeEach
   public void init() {
@@ -50,8 +88,18 @@ public class EventsProcessingIT extends BaseIT {
         .send(MessageBuilder.withPayload(messageEnvelope).setHeader(PARTITION_KEY, car.getId()).build());
 
     //Then
-    Awaitility.await().pollDelay(DELAY, TimeUnit.MILLISECONDS).pollInterval(POLL_INTERVAL, TimeUnit.MILLISECONDS)
-        .atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> this.consumerRepository.getCarDOS().size() == 1);
+
+    Awaitility.await().pollDelay(DELAY_MS, TimeUnit.MILLISECONDS).pollInterval(POLL_INTERVAL_MS, TimeUnit.MILLISECONDS)
+        .atMost(TIMEOUT_MS, TimeUnit.MILLISECONDS).until(() -> {
+
+      final HttpResponse<CarPayload[]> response = Unirest.get(String.format("http://localhost:%d/consumer", this.serverPort))
+          .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE).asObject(CarPayload[].class);
+
+      assertThat(response, is(notNullValue()));
+      assertThat(response.getStatus(), is(200));
+      assertThat(response.getBody().length, is(greaterThanOrEqualTo(1)));
+      return true;
+    });
   }
 
   @Test
@@ -73,8 +121,17 @@ public class EventsProcessingIT extends BaseIT {
         .send(MessageBuilder.withPayload(messageEnvelope).setHeader(PARTITION_KEY, car.getId()).build());
 
     //Then
-    Awaitility.await().pollDelay(DELAY, TimeUnit.MILLISECONDS).pollInterval(POLL_INTERVAL, TimeUnit.MILLISECONDS)
-        .atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> this.consumerRepository.getCarDOS().size() == 1);
+    Awaitility.await().pollDelay(DELAY_MS, TimeUnit.MILLISECONDS).pollInterval(POLL_INTERVAL_MS, TimeUnit.MILLISECONDS)
+        .atMost(TIMEOUT_MS, TimeUnit.MILLISECONDS).until(() -> {
+
+      final HttpResponse<CarPayload[]> response = Unirest.get(String.format("http://localhost:%d/consumer", this.serverPort))
+          .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE).asObject(CarPayload[].class);
+
+      assertThat(response, is(notNullValue()));
+      assertThat(response.getStatus(), is(200));
+      assertThat(response.getBody().length, is(greaterThanOrEqualTo(1)));
+      return true;
+    });
   }
 
   @Test
@@ -94,8 +151,17 @@ public class EventsProcessingIT extends BaseIT {
         .send(MessageBuilder.withPayload(messageEnvelope).setHeader(PARTITION_KEY, car.getId()).build());
 
     //Then
-    Awaitility.await().pollDelay(DELAY, TimeUnit.MILLISECONDS).pollInterval(POLL_INTERVAL, TimeUnit.MILLISECONDS)
-        .atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> this.consumerRepository.getCarDOS().size() == 0);
+    Awaitility.await().pollDelay(DELAY_MS, TimeUnit.MILLISECONDS).pollInterval(POLL_INTERVAL_MS, TimeUnit.MILLISECONDS)
+        .atMost(TIMEOUT_MS, TimeUnit.MILLISECONDS).until(() -> {
+
+      final HttpResponse<CarPayload[]> response = Unirest.get(String.format("http://localhost:%d/consumer", this.serverPort))
+          .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE).asObject(CarPayload[].class);
+
+      assertThat(response, is(notNullValue()));
+      assertThat(response.getStatus(), is(200));
+      assertThat(response.getBody().length, is(equalTo(0)));
+      return true;
+    });
   }
 
   private Metadata createMetaData() {

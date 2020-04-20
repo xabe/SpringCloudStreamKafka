@@ -1,4 +1,4 @@
-package com.xabe.spring.cloud.stream.producer.infrastructure.integration;
+package com.xabe.spring.cloud.stream.producer.infrastructure.integration.config;
 
 import com.xabe.avro.v1.MessageEnvelope;
 import java.util.List;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class CarProcessor {
 
-  private final BlockingQueue<Message<MessageEnvelope>> messagesPipe = new ArrayBlockingQueue<>(100);
+  private final BlockingQueue<Message<MessageEnvelope>> messagesKafka = new ArrayBlockingQueue<>(100);
 
   private final Logger logger;
 
@@ -30,17 +30,17 @@ public class CarProcessor {
   private void processMessage(final Message<MessageEnvelope> message) throws InterruptedException {
     this.logger.info("Car Command received {}", message.getPayload().getPayload().getClass().getName());
     this.logger.info("Car Command received partition id {}", message.getHeaders().get(KafkaHeaders.RECEIVED_PARTITION_ID));
-    if (!this.messagesPipe.offer(message, 1, TimeUnit.SECONDS)) {
-      this.logger.warn("Adding {} to messagesPipe timed out", message.getPayload().getPayload().getClass().getName());
+    if (!this.messagesKafka.offer(message, 1, TimeUnit.SECONDS)) {
+      this.logger.warn("Adding {} to messages kafka timed out", message.getPayload().getPayload().getClass().getName());
     }
   }
 
   public void before() {
-    this.messagesPipe.clear();
+    this.messagesKafka.clear();
   }
 
   public <T> Message<MessageEnvelope> expectMessagePipe(final Class<T> payloadClass, final long milliseconds) throws InterruptedException {
-    final Message<MessageEnvelope> message = this.messagesPipe.poll(milliseconds, TimeUnit.MILLISECONDS);
+    final Message<MessageEnvelope> message = this.messagesKafka.poll(milliseconds, TimeUnit.MILLISECONDS);
     if (message == null) {
       throw new RuntimeException("An exception happened while polling the queue for " + payloadClass.getName());
     }
@@ -50,8 +50,8 @@ public class CarProcessor {
     return message;
   }
 
-  public <T> List<Message<MessageEnvelope>> expectMultipleMessagesPipe(final Class<T> payloadClass, final long milliseconds, final int size)
-      throws InterruptedException {
+  public <T> List<Message<MessageEnvelope>> expectMultipleMessagesPipe(final Class<T> payloadClass, final long milliseconds,
+      final int size) {
     return IntStream.range(0, size).mapToObj(item -> {
       try {
         return this.expectMessagePipe(payloadClass, milliseconds);

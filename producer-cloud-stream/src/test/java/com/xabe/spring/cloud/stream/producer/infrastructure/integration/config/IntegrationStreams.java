@@ -1,4 +1,4 @@
-package com.xabe.spring.cloud.stream.producer.infrastructure.integration;
+package com.xabe.spring.cloud.stream.producer.infrastructure.integration.config;
 
 import org.springframework.cloud.stream.annotation.Input;
 import org.springframework.messaging.SubscribableChannel;

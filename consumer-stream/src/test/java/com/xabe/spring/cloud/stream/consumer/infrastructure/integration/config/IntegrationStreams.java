@@ -1,4 +1,4 @@
-package com.xabe.spring.cloud.stream.consumer.infrastructure.integration;
+package com.xabe.spring.cloud.stream.consumer.infrastructure.integration.config;
 
 import org.springframework.cloud.stream.annotation.Output;
 import org.springframework.messaging.MessageChannel;
