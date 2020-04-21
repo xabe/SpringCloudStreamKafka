@@ -2,6 +2,7 @@ package com.xabe.spring.cloud.stream.consumer.infrastructure.persistence;
 
 import com.xabe.spring.cloud.stream.consumer.domain.entity.CarDO;
 import com.xabe.spring.cloud.stream.consumer.domain.repository.ConsumerRepository;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ public class InMemoryConsumerRepository implements ConsumerRepository {
 
   @Override
   public List<CarDO> getCarDOS() {
-    return this.carDOS;
+    return Collections.unmodifiableList(this.carDOS);
   }
 
   @Override
