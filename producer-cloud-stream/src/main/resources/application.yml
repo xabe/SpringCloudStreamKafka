@@ -52,3 +52,5 @@ spring:
           binder: kafka-pipe
           destination: car.v1
           content-type: application/*+avro
+          producer:
+            partitionCount: ${producer.partitioncount:3}

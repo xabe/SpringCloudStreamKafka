@@ -19,7 +19,14 @@ spring:
         bindings:
           consumer-car-in:
             consumer:
-              destinationIsPattern: true
+              destination-is-pattern: true
+              idleEventInterval: ${consumer.idleEventInterval:30000}
+          consumer-car-dlq-in:
+            consumer:
+              destination-is-pattern: true
+              idleEventInterval: ${consumer.idleEventInterval:30000}
+        binder:
+          health-timeout: 60
       default:
         producer:
           useNativeEncoding: true
@@ -29,6 +36,7 @@ spring:
         kafka-pipe:
           type: kafka
           environment:
+            spring.main.sources: com.xabe.spring.cloud.stream.consumer.infrastructure.messaging.ConsumerResumeListener
             spring.cloud.stream.kafka.binder:
               producer-properties:
                 key.serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -51,9 +59,30 @@ spring:
         consumer-car-in:
           binder: kafka-pipe
           consumer:
+            autoCommitOffset: true
+            partitioned: true
             startOffset: ${consumer.startOffset:latest}
             concurrency: ${consumer.concurrency:3}
             max-attemps: ${consumer.maxattemps:3}
+            retryableExceptions:
+              "org.springframework.messaging.MessagingException": false
+              "com.xabe.spring.cloud.stream.consumer.domain.exception.BusinessException": false
           group: ${consumer.group:car}
-          destination: ${consumer.car.topic:car.v1.*}
+          destination: ${consumer.car.topic:car.v1}
           contentType: application/*+avro
+        consumer-car-dlq-in:
+          binder: kafka-pipe
+          consumer:
+            autoCommitOffset: true
+            startOffset: ${consumer.startOffset:latest}
+            concurrency: ${consumer.concurrency:3}
+            max-attemps: ${consumer.maxattemps:3}
+          group: ${consumer.group:carDlq}
+          destination: ${consumer.car-dlq.topic:car.dlq.v1}
+          contentType: application/*+avro
+        producer-car-dlq-out:
+          binder: kafka-pipe
+          destination: ${producer.car-dlq.topic:car.dlq.v1}
+          content-type: application/*+avro
+          producer:
+            partitionCount: ${producer.partitioncount:3}

@@ -5,6 +5,7 @@ import com.xabe.spring.cloud.stream.consumer.domain.repository.ConsumerRepositor
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Repository;
@@ -14,6 +15,8 @@ import org.springframework.stereotype.Repository;
 public class InMemoryConsumerRepository implements ConsumerRepository {
 
   private final Logger logger;
+
+  private final AtomicInteger error = new AtomicInteger(0);
 
   private final LinkedList<CarDO> carDOS = new LinkedList<>();
 
@@ -25,6 +28,12 @@ public class InMemoryConsumerRepository implements ConsumerRepository {
   @Override
   public void addCar(final CarDO carDO) {
     this.logger.info("Add car {}", carDO);
+    if ("error".equalsIgnoreCase(carDO.getId())) {
+      if (this.error.getAndIncrement() < 3) {
+        this.logger.info("Error to add car {}", this.error.get());
+        throw new RuntimeException();
+      }
+    }
     this.carDOS.add(carDO);
   }
 

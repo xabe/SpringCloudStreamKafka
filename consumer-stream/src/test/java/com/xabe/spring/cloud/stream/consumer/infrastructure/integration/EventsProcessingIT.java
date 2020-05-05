@@ -48,9 +48,9 @@ public class EventsProcessingIT {
 
   private static final String PARTITION_KEY = "partitionKey";
 
-  public static final int TIMEOUT_MS = 3000;
+  public static final int TIMEOUT_MS = 5000;
 
-  public static final int DELAY_MS = 500;
+  public static final int DELAY_MS = 1500;
 
   public static final int POLL_INTERVAL_MS = 500;
 

@@ -2,7 +2,9 @@ logging:
   level:
     root: INFO
     com.xabe.spring.cloud.stream: DEBUG
-    org.springframework.cloud.stream: DEBUG
+    org.springframework.cloud.stream: INFO
+
+dql-delay-interval-ms: 1
 
 spring:
   cloud:
@@ -17,3 +19,5 @@ spring:
           binder: kafka-pipe
           destination: car.v1
           content-type: application/*+avro
+          producer:
+            partitionCount: ${producer.partitioncount:3}
