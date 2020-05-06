@@ -43,6 +43,7 @@ public class MessagingConfiguration {
 
   @Bean
   public IntegrationFlow buildErrorDlqChannelFlow(final CarProcessor carProcessor) {
+    //topic.group.errors channel de errors
     return IntegrationFlows.from("car.dlq.v1.carDlq.errors").filter(carProcessor::filterMessageForDlq)
         .transform(carProcessor::transformMessageForDlq).channel(PipeStreams.PRODUCER_CAR_DLQ_OUT).get();
   }

@@ -66,7 +66,7 @@ public class CarProcessor {
 
       return this.buildDlqMessage(message, false);
     }
-    this.processMessage(message.getPayload());
+    this.circuitBreaker.executeRunnable(() -> this.processMessage(message.getPayload()));
     return null;
   }
 
