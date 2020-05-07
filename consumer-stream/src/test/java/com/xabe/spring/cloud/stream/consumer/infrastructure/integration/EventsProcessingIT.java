@@ -1,11 +1,5 @@
 package com.xabe.spring.cloud.stream.consumer.infrastructure.integration;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-
 import com.xabe.avro.v1.Car;
 import com.xabe.avro.v1.CarCreated;
 import com.xabe.avro.v1.CarDeleted;
@@ -95,10 +89,7 @@ public class EventsProcessingIT {
       final HttpResponse<CarPayload[]> response = Unirest.get(String.format("http://localhost:%d/consumer", this.serverPort))
           .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE).asObject(CarPayload[].class);
 
-      assertThat(response, is(notNullValue()));
-      assertThat(response.getStatus(), is(200));
-      assertThat(response.getBody().length, is(greaterThanOrEqualTo(1)));
-      return true;
+      return response != null && (response.getStatus() >= 200 || response.getStatus() < 300) && response.getBody().length >= 1;
     });
   }
 
@@ -127,10 +118,7 @@ public class EventsProcessingIT {
       final HttpResponse<CarPayload[]> response = Unirest.get(String.format("http://localhost:%d/consumer", this.serverPort))
           .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE).asObject(CarPayload[].class);
 
-      assertThat(response, is(notNullValue()));
-      assertThat(response.getStatus(), is(200));
-      assertThat(response.getBody().length, is(greaterThanOrEqualTo(1)));
-      return true;
+      return response != null && (response.getStatus() >= 200 || response.getStatus() < 300) && response.getBody().length >= 1;
     });
   }
 
@@ -157,10 +145,7 @@ public class EventsProcessingIT {
       final HttpResponse<CarPayload[]> response = Unirest.get(String.format("http://localhost:%d/consumer", this.serverPort))
           .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE).asObject(CarPayload[].class);
 
-      assertThat(response, is(notNullValue()));
-      assertThat(response.getStatus(), is(200));
-      assertThat(response.getBody().length, is(equalTo(0)));
-      return true;
+      return response != null && (response.getStatus() >= 200 || response.getStatus() < 300) && response.getBody().length == 0;
     });
   }
 

@@ -27,13 +27,14 @@ public class InMemoryConsumerRepository implements ConsumerRepository {
 
   @Override
   public void addCar(final CarDO carDO) {
-    this.logger.info("Add car {}", carDO);
     if ("error".equalsIgnoreCase(carDO.getId())) {
       if (this.error.getAndIncrement() < 3) {
-        this.logger.info("Error to add car {}", this.error.get());
+        this.logger.error("Error to add car {}", this.error.get());
         throw new RuntimeException();
       }
     }
+    this.error.set(0);
+    this.logger.info("Add car {}", carDO);
     this.carDOS.add(carDO);
   }
 

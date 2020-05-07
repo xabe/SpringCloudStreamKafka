@@ -5,8 +5,9 @@ server:
 logging:
   level:
     root: INFO
-    com.xabe.spring.cloud.stream: INFO
+    com.xabe.spring.cloud.stream: DEBUG
     org.springframework.cloud.stream: INFO
+    org.springframework.retry: DEBUG
 
 spring:
   main:
@@ -64,9 +65,6 @@ spring:
             startOffset: ${consumer.startOffset:latest}
             concurrency: ${consumer.concurrency:3}
             max-attemps: ${consumer.maxattemps:3}
-            retryableExceptions:
-              "org.springframework.messaging.MessagingException": false
-              "com.xabe.spring.cloud.stream.consumer.domain.exception.BusinessException": false
           group: ${consumer.group:car}
           destination: ${consumer.car.topic:car.v1}
           contentType: application/*+avro

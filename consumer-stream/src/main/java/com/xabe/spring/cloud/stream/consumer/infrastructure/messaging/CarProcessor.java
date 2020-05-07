@@ -5,7 +5,8 @@ import com.xabe.spring.cloud.stream.consumer.domain.exception.BusinessException;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker.State;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
-import java.time.Instant;
+import io.github.resilience4j.circuitbreaker.event.CircuitBreakerEvent;
+import io.github.resilience4j.circuitbreaker.event.CircuitBreakerEvent.Type;
 import java.util.Map;
 import java.util.Objects;
 import org.apache.avro.specific.SpecificRecord;
@@ -46,13 +47,20 @@ public class CarProcessor {
 
   @Autowired
   public CarProcessor(final Logger logger, @Qualifier("carHandlers") final Map<Class, EventHandler> handlers,
-      @Value("${dql-delay-interval-ms:60000}") final long dlqDelayIntervalMs, @Value("${dql-max-retries:3}") final int dlqMaxRetries,
+      @Value("${dql-delay-interval-ms:5000}") final long dlqDelayIntervalMs, @Value("${dql-max-retries:3}") final int dlqMaxRetries,
       final CircuitBreakerRegistry circuitBreakerRegistry) {
     this.logger = logger;
     this.handlers = handlers;
     this.dlqDelayIntervalMs = dlqDelayIntervalMs;
     this.dlqMaxRetries = dlqMaxRetries;
     this.circuitBreaker = circuitBreakerRegistry.circuitBreaker("circuitBreak");
+    this.circuitBreaker.getEventPublisher().onEvent(this::circuitBreakEventPublisher);
+  }
+
+  private void circuitBreakEventPublisher(final CircuitBreakerEvent circuitBreakerEvent) {
+    if (Type.SUCCESS != circuitBreakerEvent.getEventType()) {
+      this.logger.warn("New message processing CircuitBreaker event: {}", circuitBreakerEvent);
+    }
   }
 
   @StreamListener(PipeStreams.CONSUMER_CAR_IN)
@@ -78,16 +86,14 @@ public class CarProcessor {
   @SendTo(PipeStreams.PRODUCER_CAR_DLQ_OUT)
   public Message<MessageEnvelope> processCarDlqEvent(final Message<MessageEnvelope> message,
       @Header(KafkaHeaders.CONSUMER) final Consumer consumer) {
-    this.logger.info("Consumer dlq message {}", message.getPayload().getPayload().getClass().getSimpleName());
+    final String event = message.getPayload().getPayload().getClass().getSimpleName();
+    this.logger.info("Consumer dlq message {}", event);
     final Long lastRetryTimestamp = this.getRetriesTimeStampFromMessage(message);
-
-    this.logger.debug("Processing DLQ'ed message {} for {} try queued in {}", message.getPayload().getPayload(),
-        Instant.ofEpochMilli((lastRetryTimestamp)), consumer.assignment());
-
-    if (lastRetryTimestamp > (System.currentTimeMillis() - this.dlqDelayIntervalMs)) {
-      this.logger.warn("Received message from {}, pausing DLQ in {}, consumers... {}", message.getPayload().getPayload(),
-          Instant.ofEpochMilli(lastRetryTimestamp), consumer.assignment());
-
+    final long timeElapsed = System.currentTimeMillis() - this.dlqDelayIntervalMs;
+    if (lastRetryTimestamp > timeElapsed || this.isCircuitBreakerOpen(this.circuitBreaker.getState())) {
+      this.logger
+          .warn("Received message from {}, time elapsed {} and circuit break {} pausing DLQ", event, lastRetryTimestamp - timeElapsed,
+              this.circuitBreaker.getState());
       consumer.pause(consumer.assignment());
       return this.buildDlqMessage(message, false);
     }
@@ -114,7 +120,7 @@ public class CarProcessor {
     final Message<MessageEnvelope> originalMessage = (Message<MessageEnvelope>) message.getFailedMessage();
     if (Objects.nonNull(originalMessage)) {
       final int retries = this.getRetriesFromMessage(originalMessage);
-      this.logger.warn("Message number of retries {} {}", retries, originalMessage);
+      this.logger.warn("Message number of retries {} {}", retries, originalMessage.getPayload().getPayload().getClass().getSimpleName());
       if (retries > this.dlqMaxRetries) {
         this.logger.warn("Message {} discarded because it exceeded the number of retries {}", originalMessage, retries);
         return false;

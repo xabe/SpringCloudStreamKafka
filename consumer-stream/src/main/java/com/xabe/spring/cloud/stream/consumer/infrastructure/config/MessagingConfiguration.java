@@ -53,7 +53,7 @@ public class MessagingConfiguration {
     final CircuitBreakerConfig circuitBreakerConfig = CircuitBreakerConfig.custom().failureRateThreshold(20L)
         .enableAutomaticTransitionFromOpenToHalfOpen().ignoreExceptions(BusinessException.class)
         .slidingWindowType(SlidingWindowType.COUNT_BASED).slidingWindowSize(100).minimumNumberOfCalls(10)
-        .permittedNumberOfCallsInHalfOpenState(100).waitDurationInOpenState(Duration.ofSeconds(45)).build();
+        .permittedNumberOfCallsInHalfOpenState(100).waitDurationInOpenState(Duration.ofSeconds(15)).build();
     return CircuitBreakerRegistry.of(circuitBreakerConfig);
   }
 
