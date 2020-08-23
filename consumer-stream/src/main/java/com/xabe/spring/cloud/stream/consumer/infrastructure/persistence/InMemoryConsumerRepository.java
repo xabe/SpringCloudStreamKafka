@@ -22,6 +22,7 @@ public class InMemoryConsumerRepository implements ConsumerRepository {
 
   @Override
   public List<CarDO> getCarDOS() {
+    this.logger.info("Get cars size {}", this.carDOS.size());
     return Collections.unmodifiableList(this.carDOS);
   }
 
@@ -34,8 +35,8 @@ public class InMemoryConsumerRepository implements ConsumerRepository {
       }
     }
     this.error.set(0);
-    this.logger.info("Add car {}", carDO);
     this.carDOS.add(carDO);
+    this.logger.info("Add car {} size {}", carDO, this.carDOS.size());
   }
 
   @Override
@@ -44,13 +45,14 @@ public class InMemoryConsumerRepository implements ConsumerRepository {
     this.carDOS.stream().filter(carDTO1 -> carDTO1.getId().equalsIgnoreCase(carDO.getId())).findFirst().ifPresent(item -> {
       this.carDOS.remove(item);
       this.carDOS.add(carDO);
+      this.logger.info("update car {} size {}", carDO, this.carDOS.size());
     });
   }
 
   @Override
   public void deleteCar(final CarDO carDO) {
-    this.logger.info("delete car {}", carDO);
     this.carDOS.stream().filter(carDTO1 -> carDTO1.getId().equalsIgnoreCase(carDO.getId())).findFirst().ifPresent(this.carDOS::remove);
+    this.logger.info("delete car {}", carDO);
   }
 
   @Override
