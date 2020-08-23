@@ -17,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.stream.annotation.StreamListener;
-import org.springframework.cloud.stream.binder.BinderHeaders;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessagingException;
@@ -145,9 +144,11 @@ public class CarProcessor {
   private Message<MessageEnvelope> buildDlqMessage(final Message<MessageEnvelope> message, final boolean incrementRetries) {
     final int retries = this.getRetriesFromMessage(message);
 
+    //if the retry is a new one, the time window should be honoured, therefore the timestamp should be created again instead of reusing it
+    final long lastRetryTimestamp = incrementRetries ? System.currentTimeMillis() : this.getRetriesTimeStampFromMessage(message);
+
     return MessageBuilder.fromMessage(message).setHeader(X_RETRIES_HEADER, Integer.toString(incrementRetries ? retries + 1 : retries))
-        .setHeader(BinderHeaders.PARTITION_OVERRIDE, message.getHeaders().get(KafkaHeaders.RECEIVED_PARTITION_ID))
-        .setHeader(X_LAST_RETRY_TIMESTAMP_HEADER, Long.toString(System.currentTimeMillis())).build();
+        .setHeader(X_LAST_RETRY_TIMESTAMP_HEADER, Long.toString(lastRetryTimestamp)).build();
   }
 
   private int getRetriesFromMessage(final Message<MessageEnvelope> message) {

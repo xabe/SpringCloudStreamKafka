@@ -26,6 +26,9 @@ spring:
             consumer:
               destination-is-pattern: true
               idleEventInterval: ${consumer.idleEventInterval:30000}
+          producer-car-dlq-out:
+            producer:
+              messageKeyExpression: headers['partitionKey']
         binder:
           health-timeout: 60
       default:
