@@ -18,6 +18,7 @@ spring:
       default:
         producer:
           useNativeEncoding: true
+          compression.type: snappy
         consumer:
           useNativeEncoding: true
       kafka:
@@ -34,9 +35,12 @@ spring:
                 key.serializer: org.apache.kafka.common.serialization.StringSerializer
                 value.serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
                 schema.registry.url: http://localhost:8081
-                specific.avro.reader: true
                 enable.idempotence: true
                 retries: 10
+                request.timeout.ms: 30000
+                client.id: producer
+                max.block.ms: 1000
+                linger.ms: 20
               consumer-properties:
                 key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
                 value.deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
