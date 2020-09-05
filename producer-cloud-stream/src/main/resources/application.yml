@@ -35,10 +35,13 @@ spring:
                 value.serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
                 schema.registry.url: http://localhost:8081
                 specific.avro.reader: true
+                enable.idempotence: true
+                retries: 10
               consumer-properties:
                 key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
                 value.deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
                 schema.registry.url: http://localhost:8081
+                request.timeout.ms: 30000
                 specific.avro.reader: true
               autoAddPartitions: true
               autoCreateTopics: true

@@ -4,7 +4,7 @@ logging:
     com.xabe.spring.cloud.stream: DEBUG
     org.springframework.cloud.stream: INFO
 
-dql-delay-interval-ms: 1
+dlq-delay-interval-ms: 1
 
 spring:
   cloud:
