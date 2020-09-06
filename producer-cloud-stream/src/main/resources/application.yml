@@ -7,6 +7,7 @@ logging:
     root: INFO
     com.xabe.spring.cloud.stream: INFO
     org.springframework.cloud.stream: INFO
+    org.springframework.core.log: DEBUG
 
 spring:
   main:
@@ -18,7 +19,6 @@ spring:
       default:
         producer:
           useNativeEncoding: true
-          compression.type: snappy
         consumer:
           useNativeEncoding: true
       kafka:
@@ -41,12 +41,17 @@ spring:
                 client.id: producer
                 max.block.ms: 1000
                 linger.ms: 20
+                batch.size: 32768
+                use.latest.version: true
+                compression.type: gzip
               consumer-properties:
                 key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
                 value.deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
                 schema.registry.url: http://localhost:8081
                 request.timeout.ms: 30000
                 specific.avro.reader: true
+                client.id: consumer
+                use.latest.version: true
               autoAddPartitions: true
               autoCreateTopics: true
               minPartitionCount: 3
