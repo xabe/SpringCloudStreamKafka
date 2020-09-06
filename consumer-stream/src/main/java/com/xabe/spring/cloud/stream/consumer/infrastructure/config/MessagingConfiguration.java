@@ -16,6 +16,11 @@ import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.schema.registry.client.CachingRegistryClient;
+import org.springframework.cloud.schema.registry.client.ConfluentSchemaRegistryClient;
+import org.springframework.cloud.schema.registry.client.SchemaRegistryClient;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -55,6 +60,13 @@ public class MessagingConfiguration {
         .slidingWindowType(SlidingWindowType.COUNT_BASED).slidingWindowSize(100).minimumNumberOfCalls(10)
         .permittedNumberOfCallsInHalfOpenState(100).waitDurationInOpenState(Duration.ofSeconds(15)).build();
     return CircuitBreakerRegistry.of(circuitBreakerConfig);
+  }
+
+  @Bean
+  public SchemaRegistryClient schemaRegistryClient(@Value("${spring.cloud.stream.schemaRegistryClient.endpoint}") String endpoint) {
+    final ConfluentSchemaRegistryClient confluentSchemaRegistryClient = new ConfluentSchemaRegistryClient();
+    confluentSchemaRegistryClient.setEndpoint(endpoint);
+    return new CachingRegistryClient(confluentSchemaRegistryClient);
   }
 
 }

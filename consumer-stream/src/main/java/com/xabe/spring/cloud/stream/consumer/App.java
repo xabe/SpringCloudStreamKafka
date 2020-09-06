@@ -5,8 +5,10 @@ import java.util.logging.LogManager;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.schema.registry.client.EnableSchemaRegistryClient;
 
 @SpringBootApplication
+@EnableSchemaRegistryClient
 public class App {
 
   public static void main(String[] args) {

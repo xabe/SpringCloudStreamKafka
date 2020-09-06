@@ -14,6 +14,7 @@
 
   <properties>
     <avro.stringType>String</avro.stringType>
+    <schema-registry.url>http://localhost:8081</schema-registry.url>
   </properties>
 
   <build>
@@ -47,19 +48,27 @@
         <groupId>io.confluent</groupId>
         <artifactId>kafka-schema-registry-maven-plugin</artifactId>
         <version>${schema-registry.plugin.version}</version>
-        <goals>
-          <goal>register</goal>
-        </goals>
-        <configuration>
-          <schemaRegistryUrls>
-            <!--suppress UnresolvedMavenProperty -->
-            <param>${schema-registry.url}</param>
-          </schemaRegistryUrls>
-          <subjects>
-            <extracted-activity-value>src/main/avro/avsc/Event.avsc</extracted-activity-value>
-          </subjects>
-          <outputDirectory/>
-        </configuration>
+        <executions>
+          <execution>
+            <id>avro-registry</id>
+<!--            <phase>generate-resources</phase>-->
+            <goals>
+              <goal>register</goal>
+            </goals>
+            <configuration>
+              <schemaRegistryUrls>
+                <!--suppress UnresolvedMavenProperty -->
+                <param>${schema-registry.url}</param>
+              </schemaRegistryUrls>
+              <subjects>
+                <car>src/main/resources/event/message_envelope.avsc</car>
+              </subjects>
+              <schemaTypes>
+                <car>AVRO</car>
+              </schemaTypes>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

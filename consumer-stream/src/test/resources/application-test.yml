@@ -21,3 +21,4 @@ spring:
           content-type: application/*+avro
           producer:
             partitionCount: ${producer.partitioncount:3}
+            useNativeEncoding: true

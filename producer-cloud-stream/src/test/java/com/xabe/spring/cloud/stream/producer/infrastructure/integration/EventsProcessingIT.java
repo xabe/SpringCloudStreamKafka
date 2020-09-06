@@ -55,7 +55,8 @@ public class EventsProcessingIT {
     final InputStream car = EventsProcessingIT.class.getClassLoader().getResourceAsStream("avro-car.json");
     Unirest.post(UrlUtil.getInstance().getSchemaRegistryCar()).header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
         .body(IOUtils.toString(car, StandardCharsets.UTF_8)).asJson();
-
+    Unirest.put(UrlUtil.getInstance().getSchemaRegistryCompatibilityCar()).header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+            .body("{\"compatibility\":\"Forward\"}").asJson();
   }
 
   @BeforeEach
