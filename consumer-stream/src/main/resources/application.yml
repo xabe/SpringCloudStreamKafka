@@ -41,14 +41,17 @@ spring:
               messageKeyExpression: headers['partitionKey']
         binder:
           health-timeout: 60
+      default:
+        producer:
+          useNativeEncoding: true
+        consumer:
+          useNativeEncoding: true
       binders:
         kafka-pipe:
           type: kafka
           environment:
             spring.main.sources: com.xabe.spring.cloud.stream.consumer.infrastructure.messaging.ConsumerResumeListener
             spring.cloud.stream.kafka.binder:
-              configuration:
-                compression.type: gzip
               producer-properties:
                 key.serializer: org.apache.kafka.common.serialization.StringSerializer
                 value.serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
@@ -61,6 +64,8 @@ spring:
                 linger.ms: 20
                 batch.size: 32768
                 use.latest.version: true
+                auto.register.schemas: false
+                compression.type: gzip
               consumer-properties:
                 key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
                 value.deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
@@ -69,6 +74,7 @@ spring:
                 specific.avro.reader: true
                 client.id: consumer
                 use.latest.version: true
+                auto.register.schemas: false
               autoAddPartitions: true
               autoCreateTopics: true
               minPartitionCount: 3
@@ -104,4 +110,3 @@ spring:
           content-type: application/*+avro
           producer:
             partitionCount: ${producer.partitioncount:3}
-            useNativeEncoding: true
