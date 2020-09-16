@@ -29,7 +29,7 @@ spring:
         producer:
           useNativeEncoding: true
         consumer:
-          useNativeEncoding: true
+          useNativeDecoding: true
       kafka:
         bindings:
           producer-car-out:
@@ -40,11 +40,14 @@ spring:
           type: kafka
           environment:
             spring.cloud.stream.kafka.binder:
+              configuration:
+                compression.type: snappy
+                enable.idempotence: true
+                acks: all
               producer-properties:
                 key.serializer: org.apache.kafka.common.serialization.StringSerializer
                 value.serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
                 schema.registry.url: http://localhost:8081
-                enable.idempotence: true
                 retries: 10
                 request.timeout.ms: 30000
                 client.id: producer
@@ -53,7 +56,6 @@ spring:
                 batch.size: 32768
                 use.latest.version: true
                 auto.register.schemas: false
-                compression.type: gzip
               consumer-properties:
                 key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
                 value.deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer

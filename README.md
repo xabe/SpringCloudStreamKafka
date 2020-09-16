@@ -63,5 +63,5 @@ Una vez generado los binarios podemos atacar el api del productor:
 >
 >```shell script
 >curl --request GET \
->  --url http://localhost:8080/consumer
+>  --url http://localhost:7080/consumer
 >``

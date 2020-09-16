@@ -1,8 +1,11 @@
 logging:
   level:
     root: INFO
-    com.xabe.spring.cloud.stream: DEBUG
     org.springframework.cloud.stream: INFO
+    org.springframework.retry: DEBUG
+    org.springframework.core.log: DEBUG
+    org.apache.kafka.clients: DEBUG
+    org.springframework.kafka: DEBUG
 
 dlq-delay-interval-ms: 1
 

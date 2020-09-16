@@ -1,14 +1,11 @@
 server:
   servlet:
     context-path: /
-  port: 8080
+  port: 7080
 logging:
   level:
     root: INFO
     com.xabe.spring.cloud.stream: DEBUG
-    org.springframework.cloud.stream: INFO
-    org.springframework.retry: DEBUG
-    org.springframework.core.log: DEBUG
 
 spring:
   main:
@@ -45,34 +42,34 @@ spring:
         producer:
           useNativeEncoding: true
         consumer:
-          useNativeEncoding: true
+          useNativeDecoding: true
       binders:
         kafka-pipe:
           type: kafka
           environment:
             spring.main.sources: com.xabe.spring.cloud.stream.consumer.infrastructure.messaging.ConsumerResumeListener
             spring.cloud.stream.kafka.binder:
+              configuration:
+                compression.type: snappy
+                enable.idempotence: true
+                acks: all
               producer-properties:
                 key.serializer: org.apache.kafka.common.serialization.StringSerializer
                 value.serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
                 schema.registry.url: http://localhost:8081
-                enable.idempotence: true
                 retries: 10
                 request.timeout.ms: 30000
-                client.id: producer
                 max.block.ms: 1000
                 linger.ms: 20
                 batch.size: 32768
                 use.latest.version: true
                 auto.register.schemas: false
-                compression.type: gzip
               consumer-properties:
                 key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
                 value.deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
                 schema.registry.url: http://localhost:8081
                 request.timeout.ms: 30000
                 specific.avro.reader: true
-                client.id: consumer
                 use.latest.version: true
                 auto.register.schemas: false
               autoAddPartitions: true
