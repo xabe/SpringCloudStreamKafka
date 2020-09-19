@@ -95,7 +95,7 @@
         <dependency>
             <artifactId>kafka-clients</artifactId>
             <groupId>org.apache.kafka</groupId>
-            <version>2.4.1</version>
+            <version>2.6.0</version>
         </dependency>
 
         <dependency>
