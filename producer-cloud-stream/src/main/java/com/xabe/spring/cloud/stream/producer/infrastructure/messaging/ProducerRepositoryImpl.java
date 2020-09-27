@@ -43,8 +43,8 @@ public class ProducerRepositoryImpl implements ProducerRepository {
     final CarCreated carCreated = CarCreated.newBuilder().setSentAt(carDO.getSentAt()).setCar(car).build();
     final MessageEnvelope messageEnvelope = MessageEnvelope.newBuilder().setMetadata(this.createMetaData(CREATE)).setPayload(carCreated)
         .build();
-    this.logger.info("Send Command CarCreated {}", carCreated);
     this.messageChannel.send(MessageBuilder.withPayload(messageEnvelope).setHeader(PARTITION_KEY, car.getId()).build());
+    this.logger.info("Send Command CarCreated {}", carCreated);
   }
 
   @Override
@@ -53,8 +53,8 @@ public class ProducerRepositoryImpl implements ProducerRepository {
     final CarUpdated carUpdated = CarUpdated.newBuilder().setSentAt(carDO.getSentAt()).setCar(car).setCarBeforeUpdate(car).build();
     final MessageEnvelope messageEnvelope = MessageEnvelope.newBuilder().setMetadata(this.createMetaData(CREATE)).setPayload(carUpdated)
         .build();
-    this.logger.info("Send Command CarUpdate {}", carUpdated);
     this.messageChannel.send(MessageBuilder.withPayload(messageEnvelope).setHeader(PARTITION_KEY, car.getId()).build());
+    this.logger.info("Send Command CarUpdate {}", carUpdated);
   }
 
   @Override
@@ -63,9 +63,8 @@ public class ProducerRepositoryImpl implements ProducerRepository {
     final CarDeleted carDeleted = CarDeleted.newBuilder().setSentAt(carDO.getSentAt()).setCar(car).build();
     final MessageEnvelope messageEnvelope = MessageEnvelope.newBuilder().setMetadata(this.createMetaData(CREATE)).setPayload(carDeleted)
         .build();
-    this.logger.info("Send Command CarDelete {}", carDeleted);
     this.messageChannel.send(MessageBuilder.withPayload(messageEnvelope).setHeader(PARTITION_KEY, car.getId()).build());
-
+    this.logger.info("Send Command CarDelete {}", carDeleted);
   }
 
   private Metadata createMetaData(final String action) {

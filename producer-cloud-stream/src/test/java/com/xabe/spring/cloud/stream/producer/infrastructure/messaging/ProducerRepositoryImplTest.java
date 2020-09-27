@@ -56,7 +56,7 @@ class ProducerRepositoryImplTest {
     assertThat(result.getHeaders().get(ProducerRepositoryImpl.PARTITION_KEY), is("id"));
     assertThat(result.getPayload(), is(notNullValue()));
     final MessageEnvelope messageEnvelope = MessageEnvelope.class.cast(result.getPayload());
-    final Metadata metadata = Metadata.class.cast(messageEnvelope.getMetadata());
+    final Metadata metadata = messageEnvelope.getMetadata();
     assertThat(metadata, is(notNullValue()));
     assertThat(metadata.getDomain(), is((ProducerRepositoryImpl.CAR)));
     assertThat(metadata.getName(), is((ProducerRepositoryImpl.CAR)));
@@ -86,7 +86,7 @@ class ProducerRepositoryImplTest {
     assertThat(result.getHeaders().get(ProducerRepositoryImpl.PARTITION_KEY), is("id"));
     assertThat(result.getPayload(), is(notNullValue()));
     final MessageEnvelope messageEnvelope = MessageEnvelope.class.cast(result.getPayload());
-    final Metadata metadata = Metadata.class.cast(messageEnvelope.getMetadata());
+    final Metadata metadata = messageEnvelope.getMetadata();
     assertThat(metadata, is(notNullValue()));
     assertThat(metadata.getDomain(), is((ProducerRepositoryImpl.CAR)));
     assertThat(metadata.getName(), is((ProducerRepositoryImpl.CAR)));
@@ -116,7 +116,7 @@ class ProducerRepositoryImplTest {
     assertThat(result.getHeaders().get(ProducerRepositoryImpl.PARTITION_KEY), is("id"));
     assertThat(result.getPayload(), is(notNullValue()));
     final MessageEnvelope messageEnvelope = MessageEnvelope.class.cast(result.getPayload());
-    final Metadata metadata = Metadata.class.cast(messageEnvelope.getMetadata());
+    final Metadata metadata = messageEnvelope.getMetadata();
     assertThat(metadata, is(notNullValue()));
     assertThat(metadata.getDomain(), is((ProducerRepositoryImpl.CAR)));
     assertThat(metadata.getName(), is((ProducerRepositoryImpl.CAR)));

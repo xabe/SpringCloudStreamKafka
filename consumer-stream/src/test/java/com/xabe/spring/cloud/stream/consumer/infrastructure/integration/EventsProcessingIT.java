@@ -1,11 +1,6 @@
 package com.xabe.spring.cloud.stream.consumer.infrastructure.integration;
 
-import com.xabe.avro.v1.Car;
-import com.xabe.avro.v1.CarCreated;
-import com.xabe.avro.v1.CarDeleted;
-import com.xabe.avro.v1.CarUpdated;
-import com.xabe.avro.v1.MessageEnvelope;
-import com.xabe.avro.v1.Metadata;
+import com.xabe.avro.v1.*;
 import com.xabe.spring.cloud.stream.consumer.App;
 import com.xabe.spring.cloud.stream.consumer.domain.repository.ConsumerRepository;
 import com.xabe.spring.cloud.stream.consumer.infrastructure.integration.config.IntegrationStreams;
@@ -17,7 +12,9 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 import kong.unirest.HttpResponse;
 import kong.unirest.Unirest;
 import org.apache.commons.io.IOUtils;
@@ -62,8 +59,9 @@ public class EventsProcessingIT {
     final InputStream car = EventsProcessingIT.class.getClassLoader().getResourceAsStream("avro-car.json");
     Unirest.post(UrlUtil.getInstance().getSchemaRegistryCar()).header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
         .body(IOUtils.toString(car, StandardCharsets.UTF_8)).asJson();
-    Unirest.put(UrlUtil.getInstance().getSchemaRegistryCompatibilityCar()).header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-            .body("{\"compatibility\":\"Forward\"}").asJson();
+    Unirest.put(UrlUtil.getInstance().getSchemaRegistryCompatibilityCar())
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+        .body("{\"compatibility\":\"Forward\"}").asJson();
   }
 
   @BeforeEach
@@ -146,7 +144,9 @@ public class EventsProcessingIT {
       final HttpResponse<CarPayload[]> response = Unirest.get(String.format("http://localhost:%d/consumer", this.serverPort))
           .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE).asObject(CarPayload[].class);
 
-      return response != null && (response.getStatus() >= 200 || response.getStatus() < 300) && response.getBody().length == 0;
+      final Optional<CarPayload> delete = Stream.of(response.getBody()).filter(item -> item.getId().equalsIgnoreCase("delete")).findFirst();
+
+      return response != null && (response.getStatus() >= 200 || response.getStatus() < 300) && delete.isEmpty();
     });
   }
 
