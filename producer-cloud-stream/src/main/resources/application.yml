@@ -44,19 +44,21 @@ spring:
                 compression.type: snappy
                 enable.idempotence: true
                 acks: all
+                delivery.timeout.ms: 120000
               producer-properties:
                 key.serializer: org.apache.kafka.common.serialization.StringSerializer
                 value.serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
                 schema.registry.url: http://localhost:8081
-                retries: 10
+                retries: 2147483647
                 request.timeout.ms: 30000
                 client.id: producer
-                max.block.ms: 1000
-                linger.ms: 20
-                batch.size: 32768
+                max.block.ms: 60000
+                linger.ms: 50
+                batch.size: 102400
                 use.latest.version: true
                 auto.register.schemas: false
               consumer-properties:
+                partition.assignment.strategy: org.apache.kafka.clients.consumer.CooperativeStickyAssignor
                 key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
                 value.deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
                 schema.registry.url: http://localhost:8081
