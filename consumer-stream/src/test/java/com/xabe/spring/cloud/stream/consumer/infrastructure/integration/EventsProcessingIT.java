@@ -1,11 +1,5 @@
 package com.xabe.spring.cloud.stream.consumer.infrastructure.integration;
 
-import com.xabe.avro.v1.*;
-import com.xabe.spring.cloud.stream.consumer.App;
-import com.xabe.spring.cloud.stream.consumer.domain.repository.ConsumerRepository;
-import com.xabe.spring.cloud.stream.consumer.infrastructure.integration.config.IntegrationStreams;
-import com.xabe.spring.cloud.stream.consumer.infrastructure.integration.config.UrlUtil;
-import com.xabe.spring.cloud.stream.consumer.infrastructure.presentation.payload.CarPayload;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -15,6 +9,21 @@ import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
+
+import com.xabe.avro.v1.Car;
+import com.xabe.avro.v1.CarCreated;
+import com.xabe.avro.v1.CarDeleted;
+import com.xabe.avro.v1.CarUpdated;
+import com.xabe.avro.v1.MessageEnvelope;
+import com.xabe.avro.v1.Metadata;
+import com.xabe.spring.cloud.stream.consumer.App;
+import com.xabe.spring.cloud.stream.consumer.domain.repository.ConsumerRepository;
+import com.xabe.spring.cloud.stream.consumer.infrastructure.integration.config.IntegrationStreams;
+import com.xabe.spring.cloud.stream.consumer.infrastructure.integration.config.UrlUtil;
+import com.xabe.spring.cloud.stream.consumer.infrastructure.messaging.ConsumerResumeListener;
+import com.xabe.spring.cloud.stream.consumer.infrastructure.presentation.payload.CarPayload;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import kong.unirest.HttpResponse;
 import kong.unirest.Unirest;
 import org.apache.commons.io.IOUtils;
@@ -51,6 +60,12 @@ public class EventsProcessingIT {
   @Autowired
   private ConsumerRepository consumerRepository;
 
+  @Autowired
+  private CircuitBreakerRegistry circuitBreakerRegistry;
+
+  @Autowired
+  private ConsumerResumeListener consumerResumeListener;
+
   @LocalServerPort
   private int serverPort;
 
@@ -70,6 +85,32 @@ public class EventsProcessingIT {
   }
 
   @Test
+  public void dlq() throws Exception {
+    final CircuitBreaker circuitBreak = this.circuitBreakerRegistry.circuitBreaker("circuitBreak");
+    circuitBreak.transitionToForcedOpenState();
+
+    final Car car = Car.newBuilder().setId("id1").setName("mazda").build();
+    final CarCreated carCreated = CarCreated.newBuilder().setSentAt(Instant.now().toEpochMilli()).setCar(car).build();
+    final MessageEnvelope messageEnvelope = MessageEnvelope.newBuilder().setMetadata(this.createMetaData()).setPayload(carCreated).build();
+
+    //When
+    this.integrationStreams.carOutputChannel()
+        .send(MessageBuilder.withPayload(messageEnvelope).setHeader(PARTITION_KEY, car.getId()).build());
+
+    TimeUnit.SECONDS.sleep(10L);
+    circuitBreak.transitionToClosedState();
+
+    Awaitility.await().pollDelay(DELAY_MS, TimeUnit.MILLISECONDS).pollInterval(POLL_INTERVAL_MS, TimeUnit.MILLISECONDS)
+        .atMost(20000, TimeUnit.MILLISECONDS).until(() -> {
+
+          final HttpResponse<CarPayload[]> response = Unirest.get(String.format("http://localhost:%d/consumer", this.serverPort))
+              .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE).asObject(CarPayload[].class);
+
+          return response != null && (response.getStatus() >= 200 || response.getStatus() < 300) && response.getBody().length >= 1;
+        });
+  }
+
+  @Test
   public void shouldConsumerCarCreated() throws Exception {
     //Given
     final Car car = Car.newBuilder().setId("id1").setName("mazda").build();
@@ -85,11 +126,11 @@ public class EventsProcessingIT {
     Awaitility.await().pollDelay(DELAY_MS, TimeUnit.MILLISECONDS).pollInterval(POLL_INTERVAL_MS, TimeUnit.MILLISECONDS)
         .atMost(TIMEOUT_MS, TimeUnit.MILLISECONDS).until(() -> {
 
-      final HttpResponse<CarPayload[]> response = Unirest.get(String.format("http://localhost:%d/consumer", this.serverPort))
-          .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE).asObject(CarPayload[].class);
+          final HttpResponse<CarPayload[]> response = Unirest.get(String.format("http://localhost:%d/consumer", this.serverPort))
+              .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE).asObject(CarPayload[].class);
 
-      return response != null && (response.getStatus() >= 200 || response.getStatus() < 300) && response.getBody().length >= 1;
-    });
+          return response != null && (response.getStatus() >= 200 || response.getStatus() < 300) && response.getBody().length >= 1;
+        });
   }
 
   @Test
@@ -97,8 +138,8 @@ public class EventsProcessingIT {
     //Given
     final Car carOld = Car.newBuilder().setId("id2").setName("mazda").build();
     this.integrationStreams.carOutputChannel().send(MessageBuilder.withPayload(
-        MessageEnvelope.newBuilder().setMetadata(this.createMetaData())
-            .setPayload(CarCreated.newBuilder().setSentAt(Instant.now().toEpochMilli()).setCar(carOld).build()).build())
+            MessageEnvelope.newBuilder().setMetadata(this.createMetaData())
+                .setPayload(CarCreated.newBuilder().setSentAt(Instant.now().toEpochMilli()).setCar(carOld).build()).build())
         .setHeader(PARTITION_KEY, carOld.getId()).build());
 
     final Car car = Car.newBuilder().setId("id2").setName("mazda3").build();
@@ -114,11 +155,11 @@ public class EventsProcessingIT {
     Awaitility.await().pollDelay(DELAY_MS, TimeUnit.MILLISECONDS).pollInterval(POLL_INTERVAL_MS, TimeUnit.MILLISECONDS)
         .atMost(TIMEOUT_MS, TimeUnit.MILLISECONDS).until(() -> {
 
-      final HttpResponse<CarPayload[]> response = Unirest.get(String.format("http://localhost:%d/consumer", this.serverPort))
-          .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE).asObject(CarPayload[].class);
+          final HttpResponse<CarPayload[]> response = Unirest.get(String.format("http://localhost:%d/consumer", this.serverPort))
+              .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE).asObject(CarPayload[].class);
 
-      return response != null && (response.getStatus() >= 200 || response.getStatus() < 300) && response.getBody().length >= 1;
-    });
+          return response != null && (response.getStatus() >= 200 || response.getStatus() < 300) && response.getBody().length >= 1;
+        });
   }
 
   @Test
@@ -126,8 +167,8 @@ public class EventsProcessingIT {
     //Given
     final Car car = Car.newBuilder().setId("delete").setName("delete").build();
     this.integrationStreams.carOutputChannel().send(MessageBuilder.withPayload(
-        MessageEnvelope.newBuilder().setMetadata(this.createMetaData())
-            .setPayload(CarCreated.newBuilder().setSentAt(Instant.now().toEpochMilli()).setCar(car).build()).build())
+            MessageEnvelope.newBuilder().setMetadata(this.createMetaData())
+                .setPayload(CarCreated.newBuilder().setSentAt(Instant.now().toEpochMilli()).setCar(car).build()).build())
         .setHeader(PARTITION_KEY, car.getId()).build());
 
     final CarDeleted carDeleted = CarDeleted.newBuilder().setSentAt(Instant.now().toEpochMilli()).setCar(car).build();
@@ -141,13 +182,14 @@ public class EventsProcessingIT {
     Awaitility.await().pollDelay(DELAY_MS, TimeUnit.MILLISECONDS).pollInterval(POLL_INTERVAL_MS, TimeUnit.MILLISECONDS)
         .atMost(TIMEOUT_MS, TimeUnit.MILLISECONDS).until(() -> {
 
-      final HttpResponse<CarPayload[]> response = Unirest.get(String.format("http://localhost:%d/consumer", this.serverPort))
-          .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE).asObject(CarPayload[].class);
+          final HttpResponse<CarPayload[]> response = Unirest.get(String.format("http://localhost:%d/consumer", this.serverPort))
+              .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE).asObject(CarPayload[].class);
 
-      final Optional<CarPayload> delete = Stream.of(response.getBody()).filter(item -> item.getId().equalsIgnoreCase("delete")).findFirst();
+          final Optional<CarPayload> delete =
+              Stream.of(response.getBody()).filter(item -> item.getId().equalsIgnoreCase("delete")).findFirst();
 
-      return response != null && (response.getStatus() >= 200 || response.getStatus() < 300) && delete.isEmpty();
-    });
+          return response != null && (response.getStatus() >= 200 || response.getStatus() < 300) && delete.isEmpty();
+        });
   }
 
   private Metadata createMetaData() {

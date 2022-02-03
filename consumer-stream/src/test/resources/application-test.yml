@@ -2,10 +2,14 @@ logging:
   level:
     root: INFO
     org.springframework.cloud.stream: INFO
-    org.springframework.retry: DEBUG
-    org.springframework.core.log: DEBUG
-    org.apache.kafka.clients: DEBUG
-    org.springframework.kafka: DEBUG
+    org.springframework.retry: INFO
+    org.springframework.core.log: INFO
+    org.apache.kafka.clients: ERROR
+    org.springframework.kafka: INFO
+    org.apache.kafka.clients.consumer.KafkaConsumer: DEBUG
+
+consumer:
+  idleEventInterval: 10000
 
 dlq-delay-interval-ms: 1
 

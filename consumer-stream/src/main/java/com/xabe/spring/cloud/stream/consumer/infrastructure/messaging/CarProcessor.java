@@ -1,5 +1,8 @@
 package com.xabe.spring.cloud.stream.consumer.infrastructure.messaging;
 
+import java.util.Map;
+import java.util.Objects;
+
 import com.xabe.avro.v1.MessageEnvelope;
 import com.xabe.spring.cloud.stream.consumer.domain.exception.BusinessException;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
@@ -7,8 +10,6 @@ import io.github.resilience4j.circuitbreaker.CircuitBreaker.State;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.circuitbreaker.event.CircuitBreakerEvent;
 import io.github.resilience4j.circuitbreaker.event.CircuitBreakerEvent.Type;
-import java.util.Map;
-import java.util.Objects;
 import org.apache.avro.specific.SpecificRecord;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -68,9 +69,10 @@ public class CarProcessor {
       @Header(KafkaHeaders.CONSUMER) final Consumer consumer) {
     this.logger.info("Consumer message {}", message.getPayload().getPayload().getClass().getSimpleName());
     if (CarProcessor.isCircuitBreakerOpen(this.circuitBreaker.getState())) {
-      this.logger.warn("CircuitBreaker is open and won't process message");
-      consumer.pause(consumer.assignment());
 
+      consumer.pause(consumer.assignment());
+      this.logger.warn("CircuitBreaker is open and won't process message and paused consumer {} topic {}", !consumer.paused().isEmpty(),
+          consumer.assignment());
       return CarProcessor.buildDlqMessage(message, false);
     }
     this.circuitBreaker.executeRunnable(() -> this.processMessage(message.getPayload()));

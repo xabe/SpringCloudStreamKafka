@@ -17,6 +17,8 @@ public class ConsumerResumeListener implements ApplicationListener<ListenerConta
 
   @Override
   public void onApplicationEvent(final ListenerContainerIdleEvent event) {
+    this.logger.info("Is paused consumer: {}, partitions: {} event: {}", !event.getConsumer().paused().isEmpty(),
+        event.getConsumer().paused(), event);
     if (!event.getConsumer().paused().isEmpty()) {
       this.logger.info("Resuming paused partitions {}", event);
       event.getConsumer().resume(event.getConsumer().paused());
